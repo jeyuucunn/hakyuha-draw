@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>하뀨하 안 보고 그리기!</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        /* [웹 폰트 설정] 검증된 갈무리체 공식 원격 주소 */
+        @font-face {
+            font-family: 'Galmuri';
+            src: url('https://cdn.jsdelivr.net/npm/galmuri@latest/dist/Galmuri9.woff2') format('woff2');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        /* 전체 기본 폰트 적용 */
+        body {
+            font-family: 'Galmuri', sans-serif;
+            background-color: #f7f7f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .drawing-grid-container {
+            width: 100%;
+            max-width: 1300px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            background-color: #fcfcfc;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+        }
+
+        /* [수정] 제목을 갈무리 굵음체로 변경 및 색상 통일 */
+        .main-title {
+            text-align: center;
+            font-family: 'Galmuri', sans-serif !important;
+            font-size: 38px;
+            font-weight: bold; /* 굵게 설정 */
+            color: #847474 !important;
+            margin-bottom: 35px;
+            letter-spacing: -0.5px;
+        }
+
+        .dynamic-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 6px;
+        }
+
+        /* 표 상단 캐릭터 이름 글자 색상 통일 */
+        .dynamic-table thead th {
+            font-family: 'Galmuri', sans-serif;
+            font-size: 15px;
+            font-weight: normal;
+            color: #847474 !important;
+            padding: 10px 0;
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .dynamic-table tbody td.nickname-cell {
+            text-align: center;
+            width: 110px;
+            min-width: 100px;
+            vertical-align: middle;
+        }
+
+        /* 유저가 입력하는 닉네임 (굵게 및 색상 통일) */
+        .nickname-input {
+            width: 90%;
+            border: 1px solid #e1e1e8;
+            background: #ffffff;
+            text-align: center;
+            font-size: 13px;
+            font-weight: bold;
+            color: #847474 !important;
+            padding: 9px 4px;
+            border-radius: 6px;
+            font-family: 'Galmuri', sans-serif;
+        }
+        
+        .nickname-input:focus {
+            outline: none;
+            border-color: #add8e6;
+            background-color: #fcfeff;
+        }
+
+        .dynamic-table tbody td.image-cell {
+            width: calc(100% / 10);
+            position: relative;
+        }
+
+        .blue-square {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            min-width: 70px;
+            min-height: 70px;
+            background-color: #bfe2f2;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: inset 0 0 6px rgba(0,0,0,0.05);
+        }
+
+        .hidden-file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .preview-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            z-index: 1;
+            display: none;
+        }
+
+        .plus-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: normal;
+            z-index: 2;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            pointer-events: none;
+            font-family: 'Galmuri', sans-serif;
+            white-space: nowrap;
+        }
+
+        .controls {
+            margin-top: 10px;
+            margin-bottom: 25px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        /* 조작 버튼 색상 통일 */
+        .btn {
+            border: none;
+            padding: 12px 24px;
+            font-size: 13px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Galmuri', sans-serif;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+
+        .btn-add {
+            background-color: #ffffff;
+            color: #847474 !important;
+            border: 1px solid #e1e1e8;
+        }
+        .btn-add:hover {
+            background-color: #f1f1f5;
+        }
+
+        .btn-save {
+            background-color: #69b3e7;
+            color: white;
+        }
+        .btn-save:hover {
+            background-color: #4a9dd8;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="drawing-grid-container" id="capture-area">
+        <div class="main-title">하뀨하 안 보고 그리기!</div>
+        <table class="dynamic-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>빙핑</th>
+                    <th>쮸제비</th>
+                    <th>토라뮈</th>
+                    <th>스텔냥</th>
+                    <th>쭈일리언</th>
+                    <th>노숭이</th>
+                    <th>정땅콩</th>
+                    <th>알송햄쏭</th>
+                    <th>원본</th>
+                </tr>
+            </thead>
+            <tbody id="table-body">
+                </tbody>
+        </table>
+    </div>
+
+    <div class="controls">
+        <button class="btn btn-add" onclick="addNewRow()">➕ 줄 추가하기</button>
+        <button class="btn btn-save" onclick="generateAndSave()">💾 완성작 저장하기</button>
+    </div>
+
+    <script>
+        function addNewRow() {
+            const tableBody = document.getElementById('table-body');
+            if (!tableBody) return;
+
+            const tr = document.createElement('tr');
+
+            const tdNickname = document.createElement('td');
+            tdNickname.classList.add('nickname-cell');
+            tdNickname.innerHTML = '<input type="text" class="nickname-input" placeholder="닉네임 입력">';
+            tr.appendChild(tdNickname);
+
+            for (let i = 0; i < 9; i++) {
+                const tdImage = document.createElement('td');
+                tdImage.classList.add('image-cell');
+                tdImage.innerHTML = `
+                    <div class="blue-square">
+                        <span class="plus-text">+ 첨부</span>
+                        <div class="preview-img"></div>
+                        <input type="file" class="hidden-file-input" accept="image/*" onchange="handleImageUpload(this)">
+                    </div>
+                `;
+                tr.appendChild(tdImage);
+            }
+
+            tableBody.appendChild(tr);
+        }
+
+        function handleImageUpload(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const blueSquare = input.parentElement;
+                const previewDiv = blueSquare.querySelector('.preview-img');
+                const plusText = blueSquare.querySelector('.plus-text');
+
+                if (previewDiv) {
+                    previewDiv.style.backgroundImage = "url('" + e.target.result + "')";
+                    previewDiv.style.display = 'block';
+                }
+                if (plusText) {
+                    plusText.style.display = 'none';
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function generateAndSave() {
+            const captureArea = document.getElementById('capture-area');
+            if (typeof html2canvas === 'undefined') {
+                alert("라이브러리가 아직 로드되지 않았습니다.");
+                return;
+            }
+            
+            html2canvas(captureArea, {
+                useCORS: true, 
+                allowTaint: true,
+                backgroundColor: "#fcfcfc",
+                scale: 2 
+            }).then(canvas => {
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = '하뀨하_안보고_그리기.png';
+                link.href = dataURL;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }).catch(err => {
+                alert("이미지 저장 중 에러가 발생했습니다.");
+                console.error(err);
+            });
+        }
+
+        addNewRow();
+    </script>
+</body>
+</html>
