@@ -38,12 +38,11 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
 
-        /* [수정] 제목을 갈무리 굵음체로 변경 및 색상 통일 */
         .main-title {
             text-align: center;
             font-family: 'Galmuri', sans-serif !important;
             font-size: 38px;
-            font-weight: bold; /* 굵게 설정 */
+            font-weight: bold;
             color: #847474 !important;
             margin-bottom: 35px;
             letter-spacing: -0.5px;
@@ -55,7 +54,6 @@
             border-spacing: 6px;
         }
 
-        /* 표 상단 캐릭터 이름 글자 색상 통일 */
         .dynamic-table thead th {
             font-family: 'Galmuri', sans-serif;
             font-size: 15px;
@@ -66,6 +64,16 @@
             min-width: 80px;
         }
 
+        .dynamic-table tbody td.label-cell {
+            text-align: center;
+            width: 110px;
+            min-width: 100px;
+            vertical-align: middle;
+            font-size: 14px;
+            font-weight: bold;
+            color: #ff8b8b !important; /* 원본 레이블 강조 */
+        }
+
         .dynamic-table tbody td.nickname-cell {
             text-align: center;
             width: 110px;
@@ -73,7 +81,6 @@
             vertical-align: middle;
         }
 
-        /* 유저가 입력하는 닉네임 (굵게 및 색상 통일) */
         .nickname-input {
             width: 90%;
             border: 1px solid #e1e1e8;
@@ -94,8 +101,13 @@
         }
 
         .dynamic-table tbody td.image-cell {
-            width: calc(100% / 10);
+            width: calc(100% / 9);
             position: relative;
+        }
+
+        /* 고정 원본칸 배경색 차별화 */
+        .original-row .blue-square {
+            background-color: #ffe5e5; 
         }
 
         .blue-square {
@@ -156,7 +168,6 @@
             justify-content: center;
         }
 
-        /* 조작 버튼 색상 통일 */
         .btn {
             border: none;
             padding: 12px 24px;
@@ -193,8 +204,7 @@
         <table class="dynamic-table">
             <thead>
                 <tr>
-                    <th></th>
-                    <th>빙핑</th>
+                    <th></th> <th>빙핑</th>
                     <th>쮸제비</th>
                     <th>토라뮈</th>
                     <th>스텔냥</th>
@@ -202,11 +212,26 @@
                     <th>노숭이</th>
                     <th>정땅콩</th>
                     <th>알송햄쏭</th>
-                    <th>원본</th>
                 </tr>
             </thead>
             <tbody id="table-body">
-                </tbody>
+                <tr class="original-row">
+                    <td class="label-cell">원본</td>
+                    <script>
+                        for (let i = 0; i < 8; i++) {
+                            document.write(`
+                                <td class="image-cell">
+                                    <div class="blue-square">
+                                        <span class="plus-text">+ 원본</span>
+                                        <div class="preview-img"></div>
+                                        <input type="file" class="hidden-file-input" accept="image/*" onchange="handleImageUpload(this)">
+                                    </div>
+                                </td>
+                            `);
+                        }
+                    </script>
+                </tr>
+            </tbody>
         </table>
     </div>
 
@@ -222,12 +247,14 @@
 
             const tr = document.createElement('tr');
 
+            // 닉네임 입력칸
             const tdNickname = document.createElement('td');
             tdNickname.classList.add('nickname-cell');
             tdNickname.innerHTML = '<input type="text" class="nickname-input" placeholder="닉네임 입력">';
             tr.appendChild(tdNickname);
 
-            for (let i = 0; i < 9; i++) {
+            // 캐릭터 8개 첨부칸
+            for (let i = 0; i < 8; i++) {
                 const tdImage = document.createElement('td');
                 tdImage.classList.add('image-cell');
                 tdImage.innerHTML = `
